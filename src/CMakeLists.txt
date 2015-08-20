@@ -9,6 +9,7 @@ foreach(BaseSrcsIter program node util input_code node_list output)
     set(BaseSrcs ${BaseSrcs} ${BaseSrcsIter}.c)
 endforeach(BaseSrcsIter)
 add_library(core ${BaseSrcs})
+target_link_libraries(core ncurses m)
 
 # Main executable
 add_executable(tis tis.c)
