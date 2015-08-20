@@ -13,6 +13,4 @@ target_link_libraries(core ncurses m)
 
 # Main executable
 add_executable(tis tis.c)
-target_link_libraries(tis
-    ncurses core
-    )
+target_link_libraries(tis core)

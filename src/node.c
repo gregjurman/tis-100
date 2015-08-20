@@ -333,13 +333,13 @@ DISPATCH:
   switch(i->operation) {
     DEF_TARGET(MOV)
       read = node_read(n, i->src_type, i->src);
-      if (read.blocked) goto RET_DISPATCH;
+      if (read.blocked) return;
       blocked = node_write(n, i->dest.direction, read.value);
-      if (blocked) goto RET_DISPATCH;
+      if (blocked) return;
       goto END_DISPATCH;
     DEF_TARGET(ADD)
       read = node_read(n, i->src_type, i->src);
-      if (read.blocked) goto RET_DISPATCH;
+      if (read.blocked) return;
 
       n->acc += read.value;
       if (n->acc > MAX_ACC) n->acc = MAX_ACC;
@@ -348,40 +348,40 @@ DISPATCH:
 
     DEF_TARGET(SUB)
       read = node_read(n, i->src_type, i->src);
-      if (read.blocked) goto RET_DISPATCH;
+      if (read.blocked) return;
 
       n->acc -= read.value;
       if (n->acc > MAX_ACC) n->acc = MAX_ACC;
       if (n->acc < MIN_ACC) n->acc = MIN_ACC;
       goto END_DISPATCH;
 
-    DEF_TARGET(JMP) node_set_ip(n, i->src.number); goto RET_DISPATCH;
-    DEF_TARGET(JRO) node_set_ip(n, n->ip + i->src.number); goto RET_DISPATCH;
+    DEF_TARGET(JMP) node_set_ip(n, i->src.number); return;
+    DEF_TARGET(JRO) node_set_ip(n, n->ip + i->src.number); return;
     DEF_TARGET(JEZ)
       if (n->acc == 0) {
         node_set_ip(n, i->src.number);
-        goto RET_DISPATCH;
+        return;
       }
       goto END_DISPATCH;
 
     DEF_TARGET(JGZ)
       if (n->acc > 0) {
         node_set_ip(n, i->src.number);
-        goto RET_DISPATCH;
+        return;
       }
       goto END_DISPATCH;
 
     DEF_TARGET(JLZ)
       if (n->acc < 0) {
         node_set_ip(n, i->src.number);
-        goto RET_DISPATCH;
+        return;
       }
       goto END_DISPATCH;
 
     DEF_TARGET(JNZ)
       if (n->acc != 0) {
         node_set_ip(n, i->src.number);
-        goto RET_DISPATCH;
+        return;
       }
       goto END_DISPATCH;
 
@@ -407,7 +407,4 @@ DISPATCH:
 END_DISPATCH:
   n->blocked = FALSE;
   node_advance(n);
-
-RET_DISPATCH:
-  return;
 }
