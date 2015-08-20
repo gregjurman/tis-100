@@ -1,5 +1,5 @@
 # CMake flags
-set(CMAKE_C_FLAGS "-std=c99 -Wpedantic -Wall -Wundef -Wstrict-prototypes -Wmissing-declarations")
+set(CMAKE_C_FLAGS "-std=c99 -Wpedantic -O2 -Wall -Wundef -Wstrict-prototypes -Wmissing-declarations")
 
 # Find Ncurses
 find_library(NCURSES NAMES ncurses libncurses)
