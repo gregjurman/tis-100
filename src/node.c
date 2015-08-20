@@ -5,6 +5,7 @@
 
 #include "util.h"
 #include "node.h"
+#include "opcodes.h"
 
 void node_init(Node *n) {
   n->instruction_count = 0;
@@ -324,71 +325,89 @@ void node_tick(Node *n) {
 
   int blocked;
 
+  #include "targets.h"
+
+  goto *op_targets[i->operation];
+
+DISPATCH:
   switch(i->operation) {
-    case MOV:
+    DEF_TARGET(MOV)
       read = node_read(n, i->src_type, i->src);
-      if (read.blocked) return;
+      if (read.blocked) goto RET_DISPATCH;
       blocked = node_write(n, i->dest.direction, read.value);
-      if (blocked) return;
-      break;
-    case ADD:
+      if (blocked) goto RET_DISPATCH;
+      goto END_DISPATCH;
+    DEF_TARGET(ADD)
       read = node_read(n, i->src_type, i->src);
-      if (read.blocked) return;
+      if (read.blocked) goto RET_DISPATCH;
 
       n->acc += read.value;
       if (n->acc > MAX_ACC) n->acc = MAX_ACC;
       if (n->acc < MIN_ACC) n->acc = MIN_ACC;
-      break;
-    case SUB:
+      goto END_DISPATCH;
+
+    DEF_TARGET(SUB)
       read = node_read(n, i->src_type, i->src);
-      if (read.blocked) return;
+      if (read.blocked) goto RET_DISPATCH;
 
       n->acc -= read.value;
       if (n->acc > MAX_ACC) n->acc = MAX_ACC;
       if (n->acc < MIN_ACC) n->acc = MIN_ACC;
-      break;
-    case JMP: node_set_ip(n, i->src.number); return;
-    case JRO: node_set_ip(n, n->ip + i->src.number); return;
-    case JEZ:
+      goto END_DISPATCH;
+
+    DEF_TARGET(JMP) node_set_ip(n, i->src.number); goto RET_DISPATCH;
+    DEF_TARGET(JRO) node_set_ip(n, n->ip + i->src.number); goto RET_DISPATCH;
+    DEF_TARGET(JEZ)
       if (n->acc == 0) {
         node_set_ip(n, i->src.number);
-        return;
+        goto RET_DISPATCH;
       }
-      break;
-    case JGZ:
+      goto END_DISPATCH;
+
+    DEF_TARGET(JGZ)
       if (n->acc > 0) {
         node_set_ip(n, i->src.number);
-        return;
+        goto RET_DISPATCH;
       }
-      break;
-    case JLZ:
+      goto END_DISPATCH;
+
+    DEF_TARGET(JLZ)
       if (n->acc < 0) {
         node_set_ip(n, i->src.number);
-        return;
+        goto RET_DISPATCH;
       }
-      break;
-    case JNZ:
+      goto END_DISPATCH;
+
+    DEF_TARGET(JNZ)
       if (n->acc != 0) {
         node_set_ip(n, i->src.number);
-        return;
+        goto RET_DISPATCH;
       }
-      break;
-    case SWP:
+      goto END_DISPATCH;
+
+    DEF_TARGET(SWP)
       tmp = n->bak;
       n->bak = n->acc;
       n->acc = tmp;
-      break;
-    case SAV: n->bak = n->acc; break;
-    case NEG: n->acc = n->acc * -1; break;
-    case NOP: break;
-    case OUT:
+      goto END_DISPATCH;
+
+    DEF_TARGET(SAV) n->bak = n->acc; goto END_DISPATCH;
+    DEF_TARGET(NEG) n->acc = n->acc * -1; goto END_DISPATCH;
+    DEF_TARGET(NOP) goto END_DISPATCH;
+    DEF_TARGET(OUT)
 #ifndef RICH_OUTPUT
       printf("%d\n", n->acc);
 #endif
-      break;
+      goto END_DISPATCH;
+
+    DEF_TARGET(HCF)
     default:
       raise_error("ERROR: DIDN'T HANDLE op\n");
   }
+END_DISPATCH:
   n->blocked = FALSE;
   node_advance(n);
+
+RET_DISPATCH:
+  return;
 }

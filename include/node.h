@@ -4,6 +4,11 @@
 #include "constants.h"
 #include "input_code.h"
 
+#define DEF_TARGET(OP) \
+TARGET_OP_##OP : \
+case OP :\
+//printf("now: OP_%s, %i:%i", #OP, n->ip, n->instruction_count);
+
 typedef enum {
   MOV,
   SAV,
@@ -18,7 +23,8 @@ typedef enum {
   JGZ,
   JLZ,
   JRO,
-  OUT
+  OUT,
+  HCF
 } Operation;
 
 typedef enum {
